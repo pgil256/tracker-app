@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="theme-color" content="#4F46E5">
-    <meta name="description" content="Lifting Tracker - Track your workouts and progress">
-    <title>Lifting Tracker</title>
+    <meta name="description" content="Workout Tracker - Track your lifting and running progress">
+    <title>Workout Tracker</title>
 
     <!-- Font Awesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -17,12 +17,12 @@
     <link rel="stylesheet" href="css/styles.css">
 
     <!-- PWA manifest (optional, for future enhancement) -->
-    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏋️</text></svg>">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💪</text></svg>">
 </head>
 <body>
     <!-- Header -->
     <header class="header">
-        <h1>Lifting Tracker</h1>
+        <h1>Workout Tracker</h1>
         <div class="header-actions">
             <button id="theme-toggle" class="btn-icon" title="Toggle theme">
                 <i class="fas fa-moon"></i>
@@ -34,6 +34,20 @@
     <main>
         <!-- Workout View -->
         <section id="workout-view" class="view active">
+            <!-- Activity type tabs -->
+            <div class="activity-tabs">
+                <button class="activity-tab active" data-activity="lifting">
+                    <i class="fas fa-dumbbell"></i>
+                    <span>Lifting</span>
+                </button>
+                <button class="activity-tab" data-activity="running">
+                    <i class="fas fa-running"></i>
+                    <span>Running</span>
+                </button>
+            </div>
+
+            <!-- Lifting Section -->
+            <div id="lifting-section">
             <!-- Deload suggestion banner -->
             <div id="deload-banner" class="deload-banner hidden">
                 <h3>Time for a Deload?</h3>
@@ -85,6 +99,61 @@
                     Complete Week
                 </button>
             </div>
+            </div><!-- /lifting-section -->
+
+            <!-- Running Section -->
+            <div id="running-section" class="hidden">
+                <div class="run-form-card exercise-card">
+                    <div class="exercise-header">
+                        <div class="exercise-info">
+                            <h3 class="exercise-name">Log a Run</h3>
+                        </div>
+                    </div>
+
+                    <div class="run-inputs">
+                        <div class="input-group">
+                            <label for="run-distance">Distance (miles)</label>
+                            <input type="number" id="run-distance" step="0.01" min="0" placeholder="0.00">
+                        </div>
+
+                        <div class="duration-inputs">
+                            <div class="input-group duration-field">
+                                <label for="run-hours">Hours</label>
+                                <input type="number" id="run-hours" min="0" max="23" value="0">
+                            </div>
+                            <span class="duration-separator">:</span>
+                            <div class="input-group duration-field">
+                                <label for="run-minutes">Min</label>
+                                <input type="number" id="run-minutes" min="0" max="59" value="0">
+                            </div>
+                            <span class="duration-separator">:</span>
+                            <div class="input-group duration-field">
+                                <label for="run-seconds">Sec</label>
+                                <input type="number" id="run-seconds" min="0" max="59" value="0">
+                            </div>
+                        </div>
+
+                        <div class="pace-display" id="pace-display">
+                            <span class="pace-label">Pace</span>
+                            <span class="pace-value" id="pace-value">--:-- /mi</span>
+                        </div>
+
+                        <div class="input-group">
+                            <label for="run-notes">Notes</label>
+                            <input type="text" id="run-notes" placeholder="Optional notes...">
+                        </div>
+                    </div>
+
+                    <div class="action-buttons" style="margin-top: 16px;">
+                        <button id="save-run" class="btn btn-primary">
+                            <i class="fas fa-save"></i>
+                            Save Run
+                        </button>
+                    </div>
+                </div>
+
+                <div id="recent-runs"></div>
+            </div>
         </section>
 
         <!-- History View -->
@@ -93,25 +162,53 @@
                 <h2>Progress History</h2>
             </div>
 
-            <div id="history-stats" class="history-stats"></div>
+            <div class="activity-tabs history-activity-tabs">
+                <button class="activity-tab active" data-history="lifting">
+                    <i class="fas fa-dumbbell"></i>
+                    <span>Lifting</span>
+                </button>
+                <button class="activity-tab" data-history="running">
+                    <i class="fas fa-running"></i>
+                    <span>Running</span>
+                </button>
+            </div>
 
-            <div class="chart-section">
-                <h3>Overall Progress</h3>
-                <div class="chart-container">
-                    <canvas id="overview-chart"></canvas>
+            <!-- Lifting History -->
+            <div id="lifting-history">
+                <div id="history-stats" class="history-stats"></div>
+
+                <div class="chart-section">
+                    <h3>Overall Progress</h3>
+                    <div class="chart-container">
+                        <canvas id="overview-chart"></canvas>
+                    </div>
+                </div>
+
+                <div class="chart-section">
+                    <h3>Exercise Progress</h3>
+                    <div class="exercise-select-wrapper">
+                        <select id="history-exercise-select">
+                            <option value="">Select an exercise...</option>
+                        </select>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="progress-chart"></canvas>
+                    </div>
                 </div>
             </div>
 
-            <div class="chart-section">
-                <h3>Exercise Progress</h3>
-                <div class="exercise-select-wrapper">
-                    <select id="history-exercise-select">
-                        <option value="">Select an exercise...</option>
-                    </select>
+            <!-- Running History -->
+            <div id="running-history" class="hidden">
+                <div id="run-history-stats" class="history-stats"></div>
+
+                <div class="chart-section">
+                    <h3>Run Progress</h3>
+                    <div class="chart-container">
+                        <canvas id="run-chart"></canvas>
+                    </div>
                 </div>
-                <div class="chart-container">
-                    <canvas id="progress-chart"></canvas>
-                </div>
+
+                <div id="run-history-log"></div>
             </div>
         </section>
 

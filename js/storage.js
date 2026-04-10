@@ -7,7 +7,9 @@ const STORAGE_KEYS = {
     THEME: 'hp_tracker_theme',
     CURRENT_WEEK: 'hp_tracker_current_week',
     WEEKS_SINCE_DELOAD: 'hp_tracker_weeks_since_deload',
-    DELOAD_DISMISSED: 'hp_tracker_deload_dismissed'
+    DELOAD_DISMISSED: 'hp_tracker_deload_dismissed',
+    ACTIVITY_TYPE: 'hp_tracker_activity_type',
+    RUNS: 'hp_tracker_runs'
 };
 
 const Storage = {
@@ -176,6 +178,51 @@ const Storage = {
                 entries: sorted.length
             };
         });
+
+        return stats;
+    },
+
+    // Activity type
+    getActivityType() {
+        return localStorage.getItem(STORAGE_KEYS.ACTIVITY_TYPE) || 'lifting';
+    },
+
+    setActivityType(type) {
+        localStorage.setItem(STORAGE_KEYS.ACTIVITY_TYPE, type);
+    },
+
+    // Runs
+    getAllRuns() {
+        const data = localStorage.getItem(STORAGE_KEYS.RUNS);
+        return data ? JSON.parse(data) : [];
+    },
+
+    saveRun(run) {
+        const runs = this.getAllRuns();
+        run.id = Date.now().toString();
+        run.timestamp = new Date().toISOString();
+        runs.push(run);
+        localStorage.setItem(STORAGE_KEYS.RUNS, JSON.stringify(runs));
+        return run;
+    },
+
+    getRunStats() {
+        const runs = this.getAllRuns();
+        const stats = {
+            totalRuns: runs.length,
+            totalDistance: runs.reduce((sum, r) => sum + (r.distance || 0), 0),
+            bestPace: null
+        };
+
+        if (runs.length > 0) {
+            const paces = runs.map(r => r.pace).filter(p => p && isFinite(p));
+            if (paces.length > 0) {
+                const bestPaceSeconds = Math.min(...paces);
+                const mins = Math.floor(bestPaceSeconds / 60);
+                const secs = Math.round(bestPaceSeconds % 60);
+                stats.bestPace = `${mins}:${secs.toString().padStart(2, '0')}`;
+            }
+        }
 
         return stats;
     },

@@ -831,6 +831,166 @@ main {
     color: white;
 }
 
+/* Activity type tabs */
+.activity-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.activity-tab {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 16px;
+    border: 2px solid var(--border-color);
+    border-radius: var(--radius-md);
+    background: var(--bg-secondary);
+    color: var(--text-secondary);
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.activity-tab.active {
+    background: var(--accent-primary);
+    color: white;
+    border-color: var(--accent-primary);
+}
+
+.activity-tab i {
+    font-size: 1.125rem;
+}
+
+/* Run form */
+.run-inputs {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.run-inputs input {
+    padding: 10px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    font-size: 1rem;
+    width: 100%;
+    min-height: 44px;
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+.run-inputs input:focus {
+    outline: none;
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+}
+
+.run-inputs input::placeholder {
+    color: var(--text-muted);
+}
+
+.duration-inputs {
+    display: flex;
+    align-items: flex-end;
+    gap: 4px;
+}
+
+.duration-field {
+    flex: 1;
+}
+
+.duration-separator {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+    padding-bottom: 12px;
+}
+
+.pace-display {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    background: var(--bg-tertiary);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-color);
+}
+
+.pace-label {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.pace-value {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--accent-primary);
+}
+
+/* Recent runs / Run log */
+.recent-runs-title,
+.run-history-log-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-top: 24px;
+    margin-bottom: 12px;
+}
+
+.run-log-item {
+    padding: 12px 16px;
+    margin-bottom: 8px;
+}
+
+.run-log-top,
+.run-log-bottom {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.run-log-top {
+    margin-bottom: 4px;
+}
+
+.run-log-date {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.run-log-distance {
+    font-weight: 700;
+    color: var(--accent-primary);
+    font-size: 1.125rem;
+}
+
+.run-log-duration {
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+}
+
+.run-log-pace {
+    color: var(--accent-success);
+    font-weight: 600;
+    font-size: 0.875rem;
+}
+
+.run-log-notes {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    margin-top: 4px;
+    font-style: italic;
+}
+
 /* Hidden utility */
 .hidden {
     display: none !important;

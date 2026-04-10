@@ -6,6 +6,7 @@ const App = {
     currentDay: 0,
     isDeloadWorkout: false,
     optionalExercises: [], // tracks added optional exercise selections
+    activityType: 'lifting',
 
     init() {
         // Load theme
@@ -20,6 +21,9 @@ const App = {
         // Initialize with 1 optional exercise slot
         this.optionalExercises = [''];
 
+        // Load activity type
+        this.activityType = Storage.getActivityType();
+
         // Set up event listeners
         this.setupEventListeners();
 
@@ -27,6 +31,7 @@ const App = {
         this.checkDeloadSuggestion();
 
         // Render initial view
+        this.updateActivityTabs();
         this.renderWorkoutView();
         this.updateNavigation();
     },
@@ -91,6 +96,32 @@ const App = {
         document.getElementById('dismiss-deload').addEventListener('click', () => {
             this.dismissDeload();
         });
+
+        // Activity type tabs
+        document.querySelectorAll('.activity-tab[data-activity]').forEach(tab => {
+            tab.addEventListener('click', (e) => {
+                this.switchActivityType(e.currentTarget.dataset.activity);
+            });
+        });
+
+        // History activity type tabs
+        document.querySelectorAll('.activity-tab[data-history]').forEach(tab => {
+            tab.addEventListener('click', (e) => {
+                this.switchHistoryType(e.currentTarget.dataset.history);
+            });
+        });
+
+        // Run form inputs (real-time pace calculation)
+        ['run-distance', 'run-hours', 'run-minutes', 'run-seconds'].forEach(id => {
+            document.getElementById(id).addEventListener('input', () => {
+                this.calculateAndDisplayPace();
+            });
+        });
+
+        // Save run button
+        document.getElementById('save-run').addEventListener('click', () => {
+            this.saveRun();
+        });
     },
 
     toggleTheme() {
@@ -122,6 +153,10 @@ const App = {
 
         if (view === 'history') {
             this.renderHistoryView();
+            const activeHistoryTab = document.querySelector('.activity-tab[data-history].active');
+            if (activeHistoryTab && activeHistoryTab.dataset.history === 'running') {
+                this.renderRunHistoryView();
+            }
         } else if (view === 'settings') {
             this.renderSettingsView();
         } else if (view === 'workout') {
@@ -770,6 +805,194 @@ const App = {
                 this.showToast('Substitution removed', 'success');
             });
             item.appendChild(removeBtn);
+
+            container.appendChild(item);
+        });
+    },
+
+    updateActivityTabs() {
+        document.querySelectorAll('.activity-tab[data-activity]').forEach(tab => {
+            tab.classList.toggle('active', tab.dataset.activity === this.activityType);
+        });
+        document.getElementById('lifting-section').classList.toggle('hidden', this.activityType !== 'lifting');
+        document.getElementById('running-section').classList.toggle('hidden', this.activityType !== 'running');
+        if (this.activityType === 'running') {
+            this.renderRecentRuns();
+        }
+    },
+
+    switchActivityType(type) {
+        this.activityType = type;
+        Storage.setActivityType(type);
+        this.updateActivityTabs();
+    },
+
+    switchHistoryType(type) {
+        document.querySelectorAll('.activity-tab[data-history]').forEach(tab => {
+            tab.classList.toggle('active', tab.dataset.history === type);
+        });
+        document.getElementById('lifting-history').classList.toggle('hidden', type !== 'lifting');
+        document.getElementById('running-history').classList.toggle('hidden', type !== 'running');
+        if (type === 'running') {
+            this.renderRunHistoryView();
+        }
+    },
+
+    calculateAndDisplayPace() {
+        const distance = parseFloat(document.getElementById('run-distance').value) || 0;
+        const hours = parseInt(document.getElementById('run-hours').value) || 0;
+        const minutes = parseInt(document.getElementById('run-minutes').value) || 0;
+        const seconds = parseInt(document.getElementById('run-seconds').value) || 0;
+        const totalSeconds = hours * 3600 + minutes * 60 + seconds;
+        const paceDisplay = document.getElementById('pace-value');
+
+        if (distance > 0 && totalSeconds > 0) {
+            const paceSecondsPerMile = totalSeconds / distance;
+            const paceMins = Math.floor(paceSecondsPerMile / 60);
+            const paceSecs = Math.round(paceSecondsPerMile % 60);
+            paceDisplay.textContent = `${paceMins}:${paceSecs.toString().padStart(2, '0')} /mi`;
+        } else {
+            paceDisplay.textContent = '--:-- /mi';
+        }
+    },
+
+    saveRun() {
+        const distance = parseFloat(document.getElementById('run-distance').value) || 0;
+        const hours = parseInt(document.getElementById('run-hours').value) || 0;
+        const minutes = parseInt(document.getElementById('run-minutes').value) || 0;
+        const seconds = parseInt(document.getElementById('run-seconds').value) || 0;
+        const notes = document.getElementById('run-notes').value.trim();
+        const totalSeconds = hours * 3600 + minutes * 60 + seconds;
+
+        if (distance <= 0 || totalSeconds <= 0) {
+            this.showToast('Please enter distance and duration', 'error');
+            return;
+        }
+
+        const run = {
+            distance,
+            duration: totalSeconds,
+            pace: totalSeconds / distance,
+            notes
+        };
+
+        Storage.saveRun(run);
+        this.showToast('Run saved!', 'success');
+
+        // Reset form
+        document.getElementById('run-distance').value = '';
+        document.getElementById('run-hours').value = '0';
+        document.getElementById('run-minutes').value = '0';
+        document.getElementById('run-seconds').value = '0';
+        document.getElementById('run-notes').value = '';
+        document.getElementById('pace-value').textContent = '--:-- /mi';
+
+        this.renderRecentRuns();
+    },
+
+    formatPace(paceSeconds) {
+        const mins = Math.floor(paceSeconds / 60);
+        const secs = Math.round(paceSeconds % 60);
+        return `${mins}:${secs.toString().padStart(2, '0')}`;
+    },
+
+    formatDuration(totalSeconds) {
+        const hrs = Math.floor(totalSeconds / 3600);
+        const mins = Math.floor((totalSeconds % 3600) / 60);
+        const secs = totalSeconds % 60;
+        if (hrs > 0) {
+            return `${hrs}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+        return `${mins}:${secs.toString().padStart(2, '0')}`;
+    },
+
+    renderRecentRuns() {
+        const container = document.getElementById('recent-runs');
+        const runs = Storage.getAllRuns().sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+        container.replaceChildren();
+
+        if (runs.length === 0) return;
+
+        container.appendChild(this.createElement('h3', { className: 'recent-runs-title', textContent: 'Recent Runs' }));
+
+        runs.slice(0, 10).forEach(run => {
+            const item = this.createElement('div', { className: 'run-log-item exercise-card' });
+            const date = new Date(run.timestamp);
+            const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+
+            const topRow = this.createElement('div', { className: 'run-log-top' });
+            topRow.appendChild(this.createElement('span', { className: 'run-log-date', textContent: dateStr }));
+            topRow.appendChild(this.createElement('span', { className: 'run-log-distance', textContent: `${run.distance} mi` }));
+            item.appendChild(topRow);
+
+            const bottomRow = this.createElement('div', { className: 'run-log-bottom' });
+            bottomRow.appendChild(this.createElement('span', { className: 'run-log-duration', textContent: this.formatDuration(run.duration) }));
+            bottomRow.appendChild(this.createElement('span', { className: 'run-log-pace', textContent: `${this.formatPace(run.pace)} /mi` }));
+            item.appendChild(bottomRow);
+
+            if (run.notes) {
+                item.appendChild(this.createElement('div', { className: 'run-log-notes', textContent: run.notes }));
+            }
+
+            container.appendChild(item);
+        });
+    },
+
+    renderRunHistoryView() {
+        this.renderRunHistoryStats();
+        Charts.renderRunChart('run-chart');
+        this.renderRunHistoryLog();
+    },
+
+    renderRunHistoryStats() {
+        const container = document.getElementById('run-history-stats');
+        const stats = Storage.getRunStats();
+        container.replaceChildren();
+
+        const statItems = [
+            { value: stats.totalRuns, label: 'Total Runs' },
+            { value: stats.totalDistance.toFixed(1), label: 'Total Miles' },
+            { value: stats.bestPace || '--:--', label: 'Best Pace' }
+        ];
+
+        statItems.forEach(item => {
+            const card = this.createElement('div', { className: 'stat-card' });
+            card.appendChild(this.createElement('div', { className: 'stat-value', textContent: item.value.toString() }));
+            card.appendChild(this.createElement('div', { className: 'stat-label', textContent: item.label }));
+            container.appendChild(card);
+        });
+    },
+
+    renderRunHistoryLog() {
+        const container = document.getElementById('run-history-log');
+        const runs = Storage.getAllRuns().sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+        container.replaceChildren();
+
+        if (runs.length === 0) {
+            container.appendChild(this.createElement('p', { className: 'no-data', textContent: 'No runs logged yet. Start tracking your runs!' }));
+            return;
+        }
+
+        container.appendChild(this.createElement('h3', { className: 'run-history-log-title', textContent: 'All Runs' }));
+
+        runs.forEach(run => {
+            const item = this.createElement('div', { className: 'run-log-item exercise-card' });
+            const date = new Date(run.timestamp);
+            const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
+            const topRow = this.createElement('div', { className: 'run-log-top' });
+            topRow.appendChild(this.createElement('span', { className: 'run-log-date', textContent: dateStr }));
+            topRow.appendChild(this.createElement('span', { className: 'run-log-distance', textContent: `${run.distance} mi` }));
+            item.appendChild(topRow);
+
+            const bottomRow = this.createElement('div', { className: 'run-log-bottom' });
+            bottomRow.appendChild(this.createElement('span', { className: 'run-log-duration', textContent: this.formatDuration(run.duration) }));
+            bottomRow.appendChild(this.createElement('span', { className: 'run-log-pace', textContent: `${this.formatPace(run.pace)} /mi` }));
+            item.appendChild(bottomRow);
+
+            if (run.notes) {
+                item.appendChild(this.createElement('div', { className: 'run-log-notes', textContent: run.notes }));
+            }
 
             container.appendChild(item);
         });
