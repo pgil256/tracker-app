@@ -5,7 +5,6 @@ A lightweight, zero-backend fitness tracker for logging lifting workouts and run
 ![JavaScript](https://img.shields.io/badge/JavaScript-ES2020-F7DF1E?logo=javascript&logoColor=black)
 ![Chart.js](https://img.shields.io/badge/Chart.js-4-FF6384?logo=chartdotjs&logoColor=white)
 ![No build step](https://img.shields.io/badge/build-none-success)
-![PWA ready](https://img.shields.io/badge/PWA-ready-5A0FC8)
 
 ## Features
 
@@ -14,7 +13,7 @@ A lightweight, zero-backend fitness tracker for logging lifting workouts and run
 - **Exercise substitutions** — swap in an alternative when the gym equipment is in use.
 - **Progress charts** — Chart.js visualizations for both lifting (weight × reps over time) and runs (distance / pace).
 - **Mobile-first UI** — responsive design with light + dark themes (CSS variables).
-- **Offline-first** — all data lives in `localStorage` under the `hp_tracker_` prefix.
+- **Browser storage** — all data lives in `localStorage` under the `hp_tracker_` prefix.
 - **Safe DOM manipulation** — uses `createElement` + `replaceChildren` throughout, no `innerHTML` XSS surface.
 
 ## Tech stack
